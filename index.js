@@ -3,6 +3,21 @@ const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Secret 驗證
+const SECRET = process.env.WIX_SECRET;
+
+app.use(express.json());
+
+// 中介層：驗證 x-wix-secrets header
+app.use((req, res, next) => {
+  const incomingSecret = req.headers['x-wix-secrets'];
+  if (incomingSecret !== SECRET) {
+    return res.status(403).json({ error: 'Forbidden: Invalid secret key' });
+  }
+  next();
+});
+
+// PostgreSQL Pool
 const pool = new Pool({
   host: process.env.PGHOST,
   user: process.env.PGUSER,
@@ -10,8 +25,6 @@ const pool = new Pool({
   database: process.env.PGDATABASE,
   port: process.env.PGPORT
 });
-
-app.use(express.json());
 
 // Provision endpoint
 app.post('/provision', (req, res) => {
@@ -62,6 +75,7 @@ app.post('/count', async (req, res) => {
   res.json({ count: result.rows[0].count });
 });
 
+// 啟動服務
 app.listen(port, () => {
   console.log(`Wix External DB Adaptor listening at http://localhost:${port}`);
 });
