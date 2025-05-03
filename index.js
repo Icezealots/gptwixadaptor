@@ -1,20 +1,11 @@
 const express = require('express');
 const { Pool } = require('pg');
 const app = express();
-const port = process.env.PORT || 3000;  // 預設3000端口
+const port = process.env.PORT || 3000;
 
 const SECRET = process.env.WIX_SECRET;
 
 app.use(express.json());
-
-// 中介層：驗證 x-wix-secrets header
-app.use((req, res, next) => {
-  const incomingSecret = req.headers['x-wix-secrets'];
-  if (incomingSecret !== SECRET) {
-    return res.status(403).json({ error: 'Forbidden: Invalid secret key' });
-  }
-  next();
-});
 
 // PostgreSQL Pool
 const pool = new Pool({
@@ -23,116 +14,92 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
   port: process.env.PGPORT,
-  ssl: {
-    rejectUnauthorized: false
+  ssl: { rejectUnauthorized: false }
+});
+
+// 驗證 secretKey（來自 body）
+function verifySecret(req, res) {
+  const secretFromBody = req.body?.requestContext?.settings?.secretKey;
+  if (secretFromBody !== SECRET) {
+    res.status(403).json({ error: 'Forbidden: Invalid secret key' });
+    return false;
   }
-});
+  return true;
+}
 
-// Provision endpoint
-app.post('/provision', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// List schemas endpoint
+// ✅ schemas/list — 回傳 schema 給 Wix
 app.post('/schemas/list', (req, res) => {
-  try {
-    // 假設返回的資料為 feedbacks 資料表的結構
-    res.status(200).json({
-      schemas: [
-        {
-          id: 'feedbacks',
-          displayName: 'Feedbacks',
-          allowedOperations: ['get', 'find', 'count', 'update', 'insert', 'remove'],
-          maxPageSize: 50,
-          ttl: 3600,
-          fields: {
-            _id: {
-              displayName: '_id',
-              type: 'string'
-            },
-            _createddate: {
-              displayName: '_createddate',
-              type: 'datetime'
-            },
-            _updateddate: {
-              displayName: '_updateddate',
-              type: 'datetime'
-            },
-            _owner: {
-              displayName: '_owner',
-              type: 'string'
-            },
-            user_id: {
-              displayName: 'user_id',
-              type: 'string'
-            },
-            feedback: {
-              displayName: 'feedback',
-              type: 'text'
-            }
+  if (!verifySecret(req, res)) return;
+
+  res.json({
+    schemas: [
+      {
+        id: 'feedbacks',
+        displayName: 'feedbacks',
+        allowedOperations: ['get', 'find', 'count', 'update', 'insert', 'remove'],
+        maxPageSize: 50,
+        ttl: 3600,
+        fields: {
+          _id: {
+            displayName: '_id',
+            type: 'string',
+            queryOperators: ['eq', 'ne']
+          },
+          _createddate: {
+            displayName: '_createddate',
+            type: 'datetime',
+            queryOperators: ['eq', 'lt', 'gt', 'lte', 'gte']
+          },
+          user_id: {
+            displayName: 'user_id',
+            type: 'string',
+            queryOperators: ['eq', 'startsWith', 'endsWith', 'contains']
+          },
+          feedback: {
+            displayName: 'feedback',
+            type: 'text',
+            queryOperators: ['eq', 'startsWith', 'endsWith', 'contains']
           }
         }
-      ]
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+      }
+    ]
+  });
 });
 
-// Get item by _id
-app.get('/get', async (req, res) => {
-  const { _id } = req.query;
-  const result = await pool.query('SELECT * FROM feedbacks WHERE _id = $1', [_id]);
-  res.json(result.rows[0] || {});
-});
-
-// Find items based on a filter
+// ✅ find — 查詢資料
 app.post('/find', async (req, res) => {
-  const { filter } = req.body;
-  const result = await pool.query('SELECT * FROM feedbacks WHERE feedback LIKE $1', [`%${filter}%`]);
+  if (!verifySecret(req, res)) return;
+
+  const { filter = {} } = req.body;
+  const keyword = filter.feedback?.startsWith || ''; // 只示範一種 operator
+
+  const result = await pool.query(
+    `SELECT * FROM feedbacks WHERE feedback ILIKE $1`,
+    [`${keyword}%`]
+  );
   res.json(result.rows);
 });
 
-// Count items
-app.post('/count', async (req, res) => {
-  const { filter } = req.body;
-  const result = await pool.query('SELECT COUNT(*) FROM feedbacks WHERE feedback LIKE $1', [`%${filter}%`]);
-  res.json({ count: result.rows[0].count });
-});
-
-// Insert item into database
+// ✅ insert — 插入資料
 app.post('/insert', async (req, res) => {
-  const { user_id, feedback, _owner, _id } = req.body; // 這裡假設 _id 是由外部提供
-  const now = new Date().toISOString(); // Current timestamp for _createdDate and _updatedDate
+  if (!verifySecret(req, res)) return;
 
-  await pool.query(
-    `INSERT INTO feedbacks (_id, user_id, feedback, _createddate, _updateddate, _owner)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [_id, user_id, feedback, now, now, _owner || null]
-  );
-  res.json({ _id });
-});
-
-// Update item in database
-app.post('/update', async (req, res) => {
   const { _id, user_id, feedback } = req.body;
   const now = new Date().toISOString();
 
   await pool.query(
-    `UPDATE feedbacks SET user_id = $1, feedback = $2, _updateddate = $3 WHERE _id = $4`,
-    [user_id, feedback, now, _id]
+    `INSERT INTO feedbacks (_id, user_id, feedback, _createddate, _updateddate)
+     VALUES ($1, $2, $3, $4, $4)`,
+    [_id, user_id, feedback, now]
   );
-  res.json({ updated: true });
+  res.json({ inserted: true });
 });
 
-// Remove item from database
-app.post('/remove', async (req, res) => {
-  const { _id } = req.body;
-
-  await pool.query(`DELETE FROM feedbacks WHERE _id = $1`, [_id]);
-  res.json({ removed: true });
+// ✅ ping（可選）
+app.get('/ping', (req, res) => {
+  res.send('ok');
 });
 
 app.listen(port, () => {
-  console.log(`Wix External DB Adaptor listening at http://localhost:${port}`);
+  console.log(`Adaptor running on http://localhost:${port}`);
 });
