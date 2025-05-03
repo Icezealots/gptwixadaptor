@@ -14,6 +14,7 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
   port: process.env.PGPORT,
+  SECRET = process.env.WixSecret,
   ssl: { rejectUnauthorized: false }
 });
 
