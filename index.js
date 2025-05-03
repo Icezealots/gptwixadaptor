@@ -21,10 +21,11 @@ app.post('/provision', (req, res) => {
 
 // List schemas endpoint
 app.get('/listSchemas', (req, res) => {
-  console.log('Received request for listSchemas');
-  res.json({
-    collections: {
-      feedbacks: {
+  try {
+    // 執行操作
+    res.status(200).json({
+      collections: {
+        feedbacks: {
         id: 'feedbacks',
         displayName: 'Feedbacks',
         fields: {
@@ -39,8 +40,11 @@ app.get('/listSchemas', (req, res) => {
         maxPageSize: 50,
         ttl: 3600
       }
-    }
-  });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 // Get item by _id
