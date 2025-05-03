@@ -39,12 +39,12 @@ app.get('/listSchemas', (req, res) => {
         id: 'feedbacks',
         displayName: 'Feedbacks',
         fields: {
-          _id: { type: 'string' },
+          _id: { type: 'integer' },
           _createdDate: { type: 'datetime' },
           _updatedDate: { type: 'datetime' },
           _owner: { type: 'string' },
           user_id: { type: 'string' },
-          feedback: { type: 'string' }
+          feedback: { type: 'text' }
         },
         allowedOperations: ['get', 'find', 'count', 'update', 'insert', 'remove'],
         maxPageSize: 50,
