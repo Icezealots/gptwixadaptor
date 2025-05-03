@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;
 
-const SECRET = process.env.WIX_SECRET;
+const SECRET = process.env.WixSecret;
 
 app.use(express.json());
 
@@ -14,7 +14,6 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
   port: process.env.PGPORT,
-  SECRET = process.env.WixSecret,
   ssl: { rejectUnauthorized: false }
 });
 
