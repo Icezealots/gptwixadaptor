@@ -3,19 +3,11 @@ const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;  // 預設3000端口
 
-// Secret 驗證
-const SECRET = process.env.WIX_SECRET;
+
 
 app.use(express.json());
 
-// 中介層：驗證 x-wix-secrets header
-app.use((req, res, next) => {
-  const incomingSecret = req.headers['x-wix-secrets'];
-  if (incomingSecret !== SECRET) {
-    return res.status(403).json({ error: 'Forbidden: Invalid secret key' });
-  }
-  next();
-});
+
 
 // PostgreSQL Pool
 const pool = new Pool({
