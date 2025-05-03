@@ -35,7 +35,7 @@ app.post('/provision', (req, res) => {
 });
 
 // List schemas endpoint
-app.get('/listSchemas', (req, res) => {
+app.get('/schemas', (req, res) => {
   try {
     // 執行操作
     res.status(200).json({
