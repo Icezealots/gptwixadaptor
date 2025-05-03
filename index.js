@@ -1,7 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const app = express();
-
+const port = process.env.PORT || 3000;  // 預設3000端口
 
 // Secret 驗證
 const SECRET = process.env.WIX_SECRET;
