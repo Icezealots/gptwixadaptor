@@ -31,7 +31,7 @@ app.get('/listSchemas', (req, res) => {
         id: 'feedbacks',
         displayName: 'Feedbacks',
         fields: {
-          _id: { type: 'integer' },
+          _id: { type: 'string' },
           _createdDate: { type: 'datetime' },
           _updatedDate: { type: 'datetime' },
           _owner: { type: 'string' },
