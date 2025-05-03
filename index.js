@@ -84,16 +84,24 @@ app.post('/find', async (req, res) => {
 app.post('/insert', async (req, res) => {
   if (!verifySecret(req, res)) return;
 
-  const { _id, user_id, feedback } = req.body;
+  // 從請求中提取資料
+  const { _id, user_id, feedback, _owner } = req.body.data;
   const now = new Date().toISOString();
 
-  await pool.query(
-    `INSERT INTO feedbacks (_id, user_id, feedback, _createddate, _updateddate)
-     VALUES ($1, $2, $3, $4, $4)`,
-    [_id, user_id, feedback, now]
-  );
-  res.json({ inserted: true });
+  try {
+    // 插入資料庫
+    await pool.query(
+      `INSERT INTO feedbacks (_id, user_id, feedback, _createddate, _updateddate, _owner)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [_id, user_id, feedback, now, now, _owner]
+    );
+    res.json({ inserted: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error inserting data into database' });
+  }
 });
+
 
 // ✅ ping（可選）
 app.get('/ping', (req, res) => {
