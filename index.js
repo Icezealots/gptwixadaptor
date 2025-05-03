@@ -2,6 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;  // 預設3000端口
+const { v4: uuidv4 } = require('uuid');
 
 
 
