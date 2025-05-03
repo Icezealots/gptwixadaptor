@@ -21,6 +21,7 @@ app.post('/provision', (req, res) => {
 
 // List schemas endpoint
 app.get('/listSchemas', (req, res) => {
+  console.log('Received request for listSchemas');
   res.json({
     collections: {
       feedbacks: {
