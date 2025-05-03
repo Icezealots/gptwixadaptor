@@ -28,34 +28,51 @@ const pool = new Pool({
   }
 });
 
-
 // Provision endpoint
 app.post('/provision', (req, res) => {
   res.json({ status: 'ok' });
 });
 
 // List schemas endpoint
-app.get('/schemas', (req, res) => {
+app.post('/schemas/list', (req, res) => {
   try {
-    // 執行操作
+    // 假設返回的資料為 feedbacks 資料表的結構
     res.status(200).json({
-      collections: {
-        feedbacks: {
-        id: 'feedbacks',
-        displayName: 'Feedbacks',
-        fields: {
-          _id: { type: 'string' },
-          _createdDate: { type: 'datetime' },
-          _updatedDate: { type: 'datetime' },
-          _owner: { type: 'string' },
-          user_id: { type: 'string' },
-          feedback: { type: 'text' }
-        },
-        allowedOperations: ['get', 'find', 'count', 'update', 'insert', 'remove'],
-        maxPageSize: 50,
-        ttl: 3600
-      }
-      }
+      schemas: [
+        {
+          id: 'feedbacks',
+          displayName: 'Feedbacks',
+          allowedOperations: ['get', 'find', 'count', 'update', 'insert', 'remove'],
+          maxPageSize: 50,
+          ttl: 3600,
+          fields: {
+            _id: {
+              displayName: '_id',
+              type: 'string'
+            },
+            _createddate: {
+              displayName: '_createddate',
+              type: 'datetime'
+            },
+            _updateddate: {
+              displayName: '_updateddate',
+              type: 'datetime'
+            },
+            _owner: {
+              displayName: '_owner',
+              type: 'string'
+            },
+            user_id: {
+              displayName: 'user_id',
+              type: 'string'
+            },
+            feedback: {
+              displayName: 'feedback',
+              type: 'text'
+            }
+          }
+        }
+      ]
     });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
