@@ -4,11 +4,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const pool = new Pool({
-  host: 'dpg-d08obl15pdvs739nmkp0-a.oregon-postgres.render.com',
-  user: 'soulv',
-  password: 'S1Kt0kXT9u71SNvtyGmoOgXKTs2MZ38y',
-  database: 'soulv_db_c786',
-  port: 5432
+  host: process.env.PGHOST,
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  port: process.env.PGPORT
 });
 
 app.use(express.json());
