@@ -75,7 +75,40 @@ app.post('/count', async (req, res) => {
   res.json({ count: result.rows[0].count });
 });
 
-// 啟動服務
+// Insert item into database
+app.post('/insert', async (req, res) => {
+  const { user_id, feedback, _owner } = req.body;
+  const _id = uuidv4();  // Generate a new UUID for the record's _id
+  const now = new Date().toISOString(); // Current timestamp for _createdDate and _updatedDate
+
+  await pool.query(
+    `INSERT INTO feedbacks (_id, user_id, feedback, _createddate, _updateddate, _owner)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [_id, user_id, feedback, now, now, _owner || null]
+  );
+  res.json({ _id });
+});
+
+// Update item in database
+app.post('/update', async (req, res) => {
+  const { _id, user_id, feedback } = req.body;
+  const now = new Date().toISOString();
+
+  await pool.query(
+    `UPDATE feedbacks SET user_id = $1, feedback = $2, _updateddate = $3 WHERE _id = $4`,
+    [user_id, feedback, now, _id]
+  );
+  res.json({ updated: true });
+});
+
+// Remove item from database
+app.post('/remove', async (req, res) => {
+  const { _id } = req.body;
+
+  await pool.query(`DELETE FROM feedbacks WHERE _id = $1`, [_id]);
+  res.json({ removed: true });
+});
+
 app.listen(port, () => {
   console.log(`Wix External DB Adaptor listening at http://localhost:${port}`);
 });
