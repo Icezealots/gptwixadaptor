@@ -2,13 +2,8 @@ const express = require('express');
 const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3000;  // 預設3000端口
-const { v4: uuidv4 } = require('uuid');
-
-
 
 app.use(express.json());
-
-
 
 // PostgreSQL Pool
 const pool = new Pool({
@@ -70,8 +65,7 @@ app.post('/count', async (req, res) => {
 
 // Insert item into database
 app.post('/insert', async (req, res) => {
-  const { user_id, feedback, _owner } = req.body;
-  const _id = uuidv4();  // Generate a new UUID for the record's _id
+  const { user_id, feedback, _owner, _id } = req.body; // 這裡假設 _id 是由外部提供
   const now = new Date().toISOString(); // Current timestamp for _createdDate and _updatedDate
 
   await pool.query(
